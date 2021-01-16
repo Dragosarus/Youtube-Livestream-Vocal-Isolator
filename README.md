@@ -13,7 +13,10 @@ Demo (with GPU support): To be added
 - You might not want to use an SSD for this (as they have a limited number of write cycles). Consider using a RAM disk (using e.g. [ImDisk](https://www.ltr-data.se/opencode.html/)) -- a size of 32 MB should be enough with the default settings.
 
 2. Double click `main.py`, or via the command line:
-`python main.py [URL] [FORMAT CODE]`, where
+
+&emsp;&emsp;`python main.py [URL] [FORMAT CODE]`
+
+&emsp;where
 - `URL` points to an ongoing livestream (e.g. https://www.youtube.com/watch?v=21X5lGlDOfg)
 - `FORMAT CODE` indicates the quality (see available format codes by running the script or via `youtube-dl -F {URL}`).
 
