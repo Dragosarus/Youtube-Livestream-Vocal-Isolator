@@ -1,4 +1,4 @@
-from inspect import getsource # edit spleeter.separator to consume less VRAM
+from inspect import getsource # Edit spleeter.separator to consume less VRAM
 from math import ceil
 from os import path, remove, makedirs
 from queue import Queue
@@ -13,7 +13,7 @@ from pydub import AudioSegment
 from pydub.playback import play
 import spleeter.separator
 
-from settings import * # local module
+from settings import * # Local module
 
 global exit_flag 
 exit_flag = False # Tell threads to shut down after a KeyboardInterrupt
@@ -23,21 +23,22 @@ def ffmpeg_thread(stream_url, spleeter_queue):
     global exit_flag
     counter = 0
     current_segs = [] # seg.ts urls
-    segment_archive = [] # ensure the same segment is not read twice
-    segment_length = "1" # length of each segment, in seconds
+    segment_archive = [] # Ensure the same segment is not read twice
+    segment_length = "1" # Length of each segment, in seconds
     archive_size = BUFFER_LIMIT
 
     while not exit_flag:
         # load segs
         if not current_segs:
-            sleep(0.1) # avoid polling the url too often
-            
-            playlist = m3u8_load(stream_url) # get new segments
+            playlist = m3u8_load(stream_url) # Get new segments
             segment_length = "".join(str(playlist.segments).split("\n#EXTINF:")[1]).split(",")[0] # \n#EXTINF:X,\n
+            segment_length = float(segment_length)
 
-            # Fetch the n most recent segments:
-            current_segs = str(playlist.segments).split("\n#EXTINF:" + segment_length + ",\n"
-                                                        )[1:][-SEG_START[int(ceil(float(segment_length)))]:]
+            # Fetch the n most recent segments (according to SEG_START):
+            seg_index = int(ceil(segment_length))
+            if seg_index not in SEG_START.keys():
+                seg_index = 0
+            current_segs = [t.split("\n")[1] for t in str(playlist.segments).split("#EXTINF")[1:]]
         try:
             # ensure segments are not repeated
             if current_segs[0] in segment_archive:
@@ -62,11 +63,12 @@ def ffmpeg_thread(stream_url, spleeter_queue):
             print("FFMPEG: CalledProcessError!")
             print(e.output)
             print(out)
-            s = AudioSegment.silent(float(segment_length))
+            s = AudioSegment.silent(segment_length)
             s.export(output_name, 'wav')
 
-        spleeter_queue.put((output_name, file_name, float(segment_length))) # signal that output is available
+        spleeter_queue.put((output_name, file_name, segment_length)) # Signal that output is available
         counter = (counter + 1) % BUFFER_LIMIT
+        sleep(segment_length / 3) # Avoid polling the url too often
     
     print("Closing ffmpeg_thread...")
             
@@ -85,7 +87,7 @@ def spleeter_thread(separator, ffmpeg_queue, arbiter_queue, delete_queue):
 
         #print("SPLEETER: separating " + segment_path)
         separator.separate_to_file(segment_path, SPLEETER_OUT)
-        delete_queue.put(segment_path) # remove output because we do not need it anymore
+        delete_queue.put(segment_path) # Remove output because we do not need it anymore
         #print("SPLEETER: separated " + segment_path)
         out_dir = SPLEETER_OUT + "/output" + str(counter)
         sound = AudioSegment.from_wav(out_dir + "/vocals.wav")
@@ -108,11 +110,12 @@ def arbiter_thread(spleeter_queue, p1_queue, p2_queue):
     queues = [p1_queue, p2_queue]
     current_queue = 0
 
-    ts2 = 0 # initial value does not matter
+    ts2 = 0 # Initial value does not matter
     while not exit_flag:
         ts1 = ts2 # Measure time spent waiting for next segment
         try:
-            sound, out_dir, segment_length = spleeter_queue.get(timeout=1) # wait until output is available
+            # Wait until output is available
+            sound, out_dir, segment_length = spleeter_queue.get(timeout=1)
         except Exception as _empty_exception:
             continue
         ts2 = perf_counter()
@@ -142,12 +145,12 @@ def playback_thread(playback_queue, delete_queue):
 # Delete temporary files after they have served their purpose
 def delete_thread(delete_queue):
     global exit_flag
-    exit_wait = True # ensure all temp files are removed
+    exit_wait = True # Ensure all temp files are removed
     while not exit_flag or exit_wait:
         try:
             del_path = delete_queue.get(timeout=3)
         except Exception: # Empty
-            exit_wait = False
+            exit_wait = not exit_flag
             continue
 
         try:
@@ -201,7 +204,7 @@ if __name__ == "__main__":
         sysexit()
 
     if not stream_url.endswith("/index.m3u8"):
-        print("Error: not a live stream.", file=stderr)
+        print("Error: not an ongoing livestream.", file=stderr)
         input("Press enter to exit.")
         sysexit()
     
@@ -249,13 +252,13 @@ if __name__ == "__main__":
         Thread(target=ffmpeg_thread,   args=[stream_url, spleeter_q]),
         Thread(target=spleeter_thread, args=[separator, spleeter_q, arbiter_q, delete_q]),
         Thread(target=arbiter_thread,  args=[arbiter_q, playback1_q, playback2_q]),
-        Thread(target=playback_thread, args=[playback1_q, delete_q]), # playback #1
-        Thread(target=playback_thread, args=[playback2_q, delete_q]), # playback #2
+        Thread(target=playback_thread, args=[playback1_q, delete_q]), # Playback #1
+        Thread(target=playback_thread, args=[playback2_q, delete_q]), # Playback #2
         Thread(target=delete_thread,   args=[delete_q])
     ]
 
     for t in ts:
-        # spleeter does not react nicely to KeyboardInterrupts
+        # Spleeter does not react nicely to KeyboardInterrupts
         if t == ts[1]: 
             t.daemon = True
         t.start()
@@ -264,7 +267,7 @@ if __name__ == "__main__":
         while True:
             sleep(100)
     except (KeyboardInterrupt, SystemExit):
-        delete_q.put(TEMP_FOLDER) # ensure temporary files are deleted
-        # tell non-daemon threads to exit (spleeter wouldn't listen anyway)
+        delete_q.put(TEMP_FOLDER) # Ensure temporary files are deleted
+        # Tell non-daemon threads to exit (spleeter wouldn't listen anyway)
         exit_flag = True 
         print("Closing main thread (and spleeter_thread)...")
