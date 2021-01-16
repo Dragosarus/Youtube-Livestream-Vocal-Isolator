@@ -8,6 +8,7 @@ CMD_USAGE = "Usage: python main.py [LIVESTREAM URL] [QUALITY]"
 TEMP_FOLDER = ""
 
 # Ensure everything inside the folder only belongs to this program
+# (i.e. do not change this!)
 TEMP_FOLDER += "/YTLivestreamVocalIsolator"
 
 # Where spleeter should put its output
@@ -43,6 +44,7 @@ CREATE_NO_WINDOW = 0x08000000
 SEG_START = {
 	1: 2, # ~2s behind
 	2: 2, # ~4s behind
+    0: 2 # For lengths not mentioned above
 }
 
 # (GPU) Limit the amount of VRAM TensorFlow is allowed to allocate
