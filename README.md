@@ -29,7 +29,7 @@ Demo (with GPU support): To be added
 - [ffmpeg](http://www.ffmpeg.org/)
 - [youtube-dl](https://github.com/ytdl-org/youtube-dl)
 
-Install via e.g. `pip install [package]`:
+Install via e.g. `pip install {package}`:
 - [m3u8](https://github.com/globocom/m3u8)
 - [pydub](https://github.com/jiaaro/pydub)
 - [spleeter](https://github.com/deezer/spleeter)
