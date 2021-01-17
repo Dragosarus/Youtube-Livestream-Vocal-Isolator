@@ -24,13 +24,18 @@ def ffmpeg_thread(stream_url, spleeter_queue):
     counter = 0
     current_segs = [] # seg.ts urls
     segment_archive = [] # Ensure the same segment is not read twice
-    segment_length = "1" # Length of each segment, in seconds
+    segment_length = 1 # Length of each segment, in seconds
     archive_size = BUFFER_LIMIT
+    ts2 = perf_counter() # Used to measure time since stream_url was checked
 
     while not exit_flag:
         # load segs
         if not current_segs:
+            ts1 = perf_counter()
+            sleep(max(segment_length / 5 - (ts1 - ts2), 0)) # Avoid polling the url too often
             playlist = m3u8_load(stream_url) # Get new segments
+            ts2 = perf_counter() 
+
             segment_length = "".join(str(playlist.segments).split("\n#EXTINF:")[1]).split(",")[0] # \n#EXTINF:X,\n
             segment_length = float(segment_length)
 
@@ -38,7 +43,7 @@ def ffmpeg_thread(stream_url, spleeter_queue):
             seg_index = int(ceil(segment_length))
             if seg_index not in SEG_START.keys():
                 seg_index = 0
-            current_segs = [t.split("\n")[1] for t in str(playlist.segments).split("#EXTINF")[1:]]
+            current_segs = [t.split("\n")[1] for t in str(playlist.segments).split("#EXTINF")[1:][-SEG_START[seg_index]:]]
         try:
             # ensure segments are not repeated
             if current_segs[0] in segment_archive:
@@ -66,9 +71,9 @@ def ffmpeg_thread(stream_url, spleeter_queue):
             s = AudioSegment.silent(segment_length)
             s.export(output_name, 'wav')
 
+        #print("FFMPEG: sending {} to spleeter".format(counter))
         spleeter_queue.put((output_name, file_name, segment_length)) # Signal that output is available
         counter = (counter + 1) % BUFFER_LIMIT
-        sleep(segment_length / 3) # Avoid polling the url too often
     
     print("Closing ffmpeg_thread...")
             
@@ -120,7 +125,7 @@ def arbiter_thread(spleeter_queue, p1_queue, p2_queue):
             continue
         ts2 = perf_counter()
         if not init: # Try to start playing segment when the previous ends
-            sleep(max(segment_length-0.05-(ts2-ts1), 0))
+            sleep(max(segment_length - 0.02 - (ts2 - ts1), 0))
         else: # No point in waiting before playing the first segment
             init = False
         print("PLAYBACK: playing", counter)
@@ -149,7 +154,7 @@ def delete_thread(delete_queue):
     while not exit_flag or exit_wait:
         try:
             del_path = delete_queue.get(timeout=3)
-        except Exception: # Empty
+        except Exception as _empty_exception:
             exit_wait = not exit_flag
             continue
 
