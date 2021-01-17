@@ -2,7 +2,9 @@
 Livestream playback with on the fly vocal isolation
 
 ## About
-Allows you to listen to a stream (more specifically, the vocals from it) in the background while doing something else. The output will generally be delayed by a few seconds compared to the Youtube player, but might depending on stream settings be slightly ahead).
+Allows you to listen to a stream (more specifically, the vocals from it) in the background while doing something else. The output will generally be delayed by a few seconds compared to the Youtube player (but might depending on stream settings be slightly ahead).
+
+Note: takes up almost 3800 MB of RAM and, if the GPU can be used, 10% of its VRAM (configurable).
 
 Demo (with GPU support): To be added
 
@@ -20,7 +22,7 @@ Demo (with GPU support): To be added
 - `URL` points to an ongoing livestream (e.g. https://www.youtube.com/watch?v=21X5lGlDOfg)
 - `FORMAT CODE` indicates the quality (see available format codes by running the script or via `youtube-dl -F {URL}`).
 
-3. Press Ctrl+C to close the program (or otherwise, but you will have to remove leftover temporary files yourself)
+3. Press Ctrl+C to close the program (or otherwise, but you will have to remove leftover temporary files yourself). You might need to do this twice.
 
 ## Dependencies
 - [Python 3.7+](https://www.python.org/)
@@ -40,5 +42,5 @@ Notable settings in `settings.py`:
 - `TEMP_FOLDER` -- where temporary files should be stored.
 - `DEFAULT_QUALITY` -- default format code: `"91"`
 - `ASK_FOR_QUALITY` -- whether to prompt for a format code if not given one as a cmd argument (uses `DEFAULT_QUALITY` if disabled)
-- `SEG_START` -- indicates minimum delay depending on the stream setup (segment length)
-- `TF_MEMORY_FRACTION` -- limits how much VRAM TensorFlow (used by Spleeter) is allowed to allocate
+- `SEG_START` -- indicates minimum delay depending on the stream setup (segment length).
+- `TF_MEMORY_FRACTION` -- (GPU) limits how much VRAM TensorFlow (used by Spleeter) is allowed to allocate
