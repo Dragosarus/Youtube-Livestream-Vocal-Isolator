@@ -11,7 +11,7 @@ Demo (with GPU support): To be added
 ## Usage
 0. Extract `main.py` and `settings.py` to a folder of your choice. Upon running `main.py` for the first time, the folders `__pycache__` and `pretrained_models` will be created (totalling ~76 MB).
 
-1. In `settings.py`, give `TEMP_FOLDER` a path to a folder where temporary files will be stored (e.g. `"E:\temp"`).
+1. In `settings.py`, give `TEMP_FOLDER` a path to a folder where temporary files will be stored (e.g. `"E:\temp"`). The path does not need to exist before executing the program -- folders will be created if needed.
 - You might not want to use an SSD for this (as they have a limited number of write cycles). Consider using a RAM disk (using e.g. [ImDisk](https://www.ltr-data.se/opencode.html/)) -- a size of 32 MB should be enough with the default settings.
 
 2. Double click `main.py`, or via the command line:
